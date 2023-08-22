@@ -12,7 +12,6 @@ import db from '../database';
 interface postData {
     pid: string;
     uid: string;
-    // Add other properties as needed - postData.bookmarks is used
     bookmarks: number;
 }
 
@@ -40,19 +39,17 @@ module.exports = function (Posts: Posts) {
         return await toggleBookmark('unbookmark', pid, uid);
     };
 
-    async function toggleBookmark(type: string, pid: string, uid: string) {
+    async function toggleBookmark(type, pid, uid) {
         if (parseInt(uid, 10) <= 0) {
             throw new Error('[[error:not-logged-in]]');
         }
 
-        const isBookmarking: boolean = type === 'bookmark';
+        const isBookmarking = type === 'bookmark';
 
-
-        const [postData, hasBookmarked]: [postData, boolean[] | boolean] = await Promise.all([
+        const [postData, hasBookmarked] = await Promise.all([
             Posts.getPostFields(pid, ['pid', 'uid']),
             Posts.hasBookmarked(pid, uid),
         ]);
-
 
         if (isBookmarking && hasBookmarked) {
             throw new Error('[[error:already-bookmarked]]');
@@ -63,30 +60,18 @@ module.exports = function (Posts: Posts) {
         }
 
         if (isBookmarking) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             await db.sortedSetAdd(`uid:${uid}:bookmarks`, Date.now(), pid);
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             await db.sortedSetRemove(`uid:${uid}:bookmarks`, pid);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        await db[isBookmarking ? 'setAdd' : 'setRemove'](`pid:${pid}:users_bookmarked`, uid);
-
-        // below line check
-        // postData.bookmarks = await db.setCount(`pid:${pid}:users_bookmarked`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-
-        // Problem -below line Im using illegal diable
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        const newBookmarksCount: number = await db.setCount(`pid:${pid}:users_bookmarked`);
-        postData.bookmarks = newBookmarksCount;
-
-
-
+        await db[isBookmarking ? 'setAdd' : 'setRemove'](
+            `pid:${pid}:users_bookmarked`,
+            uid
+        );
+        postData.bookmarks = await db.setCount(`pid:${pid}:users_bookmarked`);
         await Posts.setPostField(pid, 'bookmarks', postData.bookmarks);
 
-        await plugins.hooks.fire(`action:post.${type}`, {
+        plugins.hooks.fire(`action:post.${type}`, {
             pid: pid,
             uid: uid,
             owner: postData.uid,
@@ -99,21 +84,15 @@ module.exports = function (Posts: Posts) {
         };
     }
 
-
-    Posts.hasBookmarked = async function (pid: string | string[], uid: string): Promise<boolean | boolean[]> {
+    Posts.hasBookmarked = async function (pid, uid) {
         if (parseInt(uid, 10) <= 0) {
             return Array.isArray(pid) ? pid.map(() => false) : false;
         }
 
         if (Array.isArray(pid)) {
-            const sets: string[] = pid.map(pid => `pid:${pid}:users_bookmarked`);
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            const sets = pid.map((pid) => `pid:${pid}:users_bookmarked`);
             return await db.isMemberOfSets(sets, uid);
         }
-
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         return await db.isSetMember(`pid:${pid}:users_bookmarked`, uid);
     };
 };
