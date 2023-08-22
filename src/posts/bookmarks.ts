@@ -71,14 +71,10 @@ module.exports = function (Posts: Posts) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         await db[isBookmarking ? 'setAdd' : 'setRemove'](`pid:${pid}:users_bookmarked`, uid);
 
-        // below line check
-        // postData.bookmarks = await db.setCount(`pid:${pid}:users_bookmarked`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 
-        // Problem -below line Im using illegal diable
         // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        const newBookmarksCount: number = await db.setCount(`pid:${pid}:users_bookmarked`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        const newBookmarksCount: number = await db.setCount(`pid:${pid}:users_bookmarked`) as number;
         postData.bookmarks = newBookmarksCount;
 
 
