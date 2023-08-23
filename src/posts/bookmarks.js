@@ -1,5 +1,4 @@
 "use strict";
-/* eslint-disable import/no-import-module-exports */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/* eslint-disable import/no-import-module-exports */
 const plugins_1 = __importDefault(require("../plugins"));
 const database_1 = __importDefault(require("../database"));
 module.exports = function (Posts) {
@@ -34,7 +34,6 @@ module.exports = function (Posts) {
                 throw new Error('[[error:not-logged-in]]');
             }
             const isBookmarking = type === 'bookmark';
-            // defining postData as any type
             const [postData, hasBookmarked] = yield Promise.all([
                 Posts.getPostFields(pid, ['pid', 'uid']),
                 Posts.hasBookmarked(pid, uid),
@@ -55,12 +54,7 @@ module.exports = function (Posts) {
             }
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             yield database_1.default[isBookmarking ? 'setAdd' : 'setRemove'](`pid:${pid}:users_bookmarked`, uid);
-            // below line check
-            // postData.bookmarks = await db.setCount(`pid:${pid}:users_bookmarked`);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            // Problem -below line Im using illegal diable
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             const newBookmarksCount = yield database_1.default.setCount(`pid:${pid}:users_bookmarked`);
             postData.bookmarks = newBookmarksCount;
             yield Posts.setPostField(pid, 'bookmarks', postData.bookmarks);
@@ -76,19 +70,6 @@ module.exports = function (Posts) {
             };
         });
     }
-    /* Posts.hasBookmarked = async function (pid, uid) {
-        if (parseInt(uid, 10) <= 0) {
-            return Array.isArray(pid) ? pid.map(() => false) : false;
-        }
-
-        if (Array.isArray(pid)) {
-            const sets = pid.map(pid => `pid:${pid}:users_bookmarked`);
-            return await db.isMemberOfSets(sets, uid);
-        }
-        return await db.isSetMember(`pid:${pid}:users_bookmarked`, uid);
-    }; */
-    // Problem
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Posts.hasBookmarked = function (pid, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             if (parseInt(uid, 10) <= 0) {
@@ -96,13 +77,13 @@ module.exports = function (Posts) {
             }
             if (Array.isArray(pid)) {
                 const sets = pid.map(pid => `pid:${pid}:users_bookmarked`);
-                // eslint-disable-next-line max-len
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                return yield database_1.default.isMemberOfSets(sets, uid);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+                const isMember = yield database_1.default.isMemberOfSets(sets, uid);
+                return isMember;
             }
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            return yield database_1.default.isSetMember(`pid:${pid}:users_bookmarked`, uid);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            const isNewMember = yield database_1.default.isSetMember(`pid:${pid}:users_bookmarked`, uid);
+            return isNewMember;
         });
     };
 };

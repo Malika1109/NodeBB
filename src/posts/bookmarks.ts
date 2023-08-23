@@ -1,6 +1,4 @@
 /* eslint-disable import/no-import-module-exports */
-
-
 import plugins from '../plugins';
 import db from '../database';
 
@@ -28,7 +26,7 @@ interface BookmarkResult {
     isBookmarked: boolean;
 }
 
-module.exports = function (Posts: Posts) {
+const val = function (Posts: Posts) {
     Posts.bookmark = async function (pid: string, uid: string): Promise<{ post: postData; isBookmarked: boolean; }> {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         return await toggleBookmark('bookmark', pid, uid);
@@ -72,7 +70,6 @@ module.exports = function (Posts: Posts) {
         await db[isBookmarking ? 'setAdd' : 'setRemove'](`pid:${pid}:users_bookmarked`, uid);
 
 
-        // eslint-disable-next-line max-len
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         const newBookmarksCount: number = await db.setCount(`pid:${pid}:users_bookmarked`) as number;
         postData.bookmarks = newBookmarksCount;
@@ -102,13 +99,17 @@ module.exports = function (Posts: Posts) {
 
         if (Array.isArray(pid)) {
             const sets: string[] = pid.map(pid => `pid:${pid}:users_bookmarked`);
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            return await db.isMemberOfSets(sets, uid);
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            const isMember: boolean = await db.isMemberOfSets(sets, uid) as boolean;
+            return isMember;
         }
 
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        return await db.isSetMember(`pid:${pid}:users_bookmarked`, uid);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        const isNewMember = await db.isSetMember(`pid:${pid}:users_bookmarked`, uid) as boolean;
+        return isNewMember;
     };
 };
+
+export default val;
