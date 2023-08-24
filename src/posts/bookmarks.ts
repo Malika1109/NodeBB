@@ -1,6 +1,8 @@
 /* eslint-disable import/no-import-module-exports */
+
 import plugins from '../plugins';
 import db from '../database';
+
 
 // import { PostObject } from './types';
 
@@ -13,12 +15,14 @@ interface postData {
     bookmarks: number;
 }
 
-interface Posts {
-    bookmark: (pid: string, uid: string) => Promise<BookmarkResult>;
-    unbookmark: (pid: string, uid: string) => Promise<BookmarkResult>;
-    getPostFields: (pid: string, fields: string[]) => Promise<postData | null>;
-    hasBookmarked: (pid: string | string[], uid: string) => Promise<boolean | boolean[]>;
-    setPostField: (pid: string, field: string, value: number) => Promise<void>; // Problem:Update the value type
+declare global{
+    interface Posts {
+        bookmark: (pid: string, uid: string) => Promise<BookmarkResult>;
+        unbookmark: (pid: string, uid: string) => Promise<BookmarkResult>;
+        getPostFields: (pid: string, fields: string[]) => Promise<postData | null>;
+        hasBookmarked: (pid: string | string[], uid: string) => Promise<boolean | boolean[]>;
+        setPostField: (pid: string, field: string, value: number) => Promise<void>; // Problem:Update the value type
+    }
 }
 
 interface BookmarkResult {
@@ -26,17 +30,9 @@ interface BookmarkResult {
     isBookmarked: boolean;
 }
 
-const val = function (Posts: Posts) {
-    Posts.bookmark = async function (pid: string, uid: string): Promise<{ post: postData; isBookmarked: boolean; }> {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        return await toggleBookmark('bookmark', pid, uid);
-    };
 
-    Posts.unbookmark = async function (pid: string, uid: string): Promise<{ post: postData; isBookmarked: boolean; }> {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        return await toggleBookmark('unbookmark', pid, uid);
-    };
 
+module.exports = function (Posts: Posts) {
     async function toggleBookmark(type: string, pid: string, uid: string) {
         if (parseInt(uid, 10) <= 0) {
             throw new Error('[[error:not-logged-in]]');
@@ -92,6 +88,14 @@ const val = function (Posts: Posts) {
     }
 
 
+    Posts.bookmark = async function (pid: string, uid: string): Promise<{ post: postData; isBookmarked: boolean; }> {
+        return await toggleBookmark('bookmark', pid, uid);
+    };
+
+    Posts.unbookmark = async function (pid: string, uid: string): Promise<{ post: postData; isBookmarked: boolean; }> {
+        return await toggleBookmark('unbookmark', pid, uid);
+    };
+
     Posts.hasBookmarked = async function (pid: string | string[], uid: string): Promise<boolean | boolean[]> {
         if (parseInt(uid, 10) <= 0) {
             return Array.isArray(pid) ? pid.map(() => false) : false;
@@ -110,6 +114,7 @@ const val = function (Posts: Posts) {
         const isNewMember = await db.isSetMember(`pid:${pid}:users_bookmarked`, uid) as boolean;
         return isNewMember;
     };
+    return Posts;
 };
 
-export default val;
+
