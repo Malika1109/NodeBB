@@ -1,5 +1,3 @@
-/* eslint-disable import/no-import-module-exports */
-
 import plugins from '../plugins';
 import db from '../database';
 
@@ -32,7 +30,7 @@ interface BookmarkResult {
 
 
 
-module.exports = function (Posts: Posts) {
+export = function (Posts: Posts) {
     async function toggleBookmark(type: string, pid: string, uid: string) {
         if (parseInt(uid, 10) <= 0) {
             throw new Error('[[error:not-logged-in]]');
